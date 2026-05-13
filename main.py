@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from theme import COLORS, FONTS
+from database import init_db
 from ui.login_page import LoginPage
 from ui.dashboard_page import DashboardPage
 from ui.products_page import ProductsPage
@@ -44,7 +45,7 @@ class MainWindow(tk.Tk):
         self.active_page = None
         self.nav_buttons = {}
 
-        
+        init_db()
         self._show_login()
 
     # ── Login ────────────────────────────────────────────
@@ -147,22 +148,19 @@ class MainWindow(tk.Tk):
 
     # ── Navigation ───────────────────────────────────────
     def navigate(self, key):
-        if self.active_page == key:
-            return
-
-        # Clear current page
-        if key in self.pages:
-            self.pages[key].destroy()
-            del self.pages[key]
-
         # Highlight nav button
         for k, btn in self.nav_buttons.items():
-            if k == key:
-                btn.config(bg=COLORS["bg_selected"], fg=COLORS["text_white"])
-            else:
-                btn.config(bg=COLORS["bg_sidebar"], fg=COLORS["text_secondary"])
+            btn.config(
+                bg=COLORS["bg_selected"] if k == key else COLORS["bg_sidebar"],
+                fg=COLORS["text_white"]  if k == key else COLORS["text_secondary"],
+            )
 
-        # Build page
+        # Destroy ALL old pages, create fresh each time
+        for p in list(self.pages.values()):
+            p.destroy()
+        self.pages.clear()
+        self.active_page = key
+
         page_cls = {
             "dashboard":  DashboardPage,
             "products":   ProductsPage,
@@ -176,14 +174,15 @@ class MainWindow(tk.Tk):
         }.get(key)
 
         if page_cls:
-            # Hide old
-            for p in self.pages.values():
-                p.pack_forget()
-
-            page = page_cls(self.page_container, self.current_user)
-            page.pack(fill="both", expand=True)
-            self.pages[key] = page
-            self.active_page = key
+            try:
+                page = page_cls(self.page_container, self.current_user)
+                page.pack(fill="both", expand=True)
+                self.pages[key] = page
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                import tkinter.messagebox as mb
+                mb.showerror("Lỗi trang", f"Không thể tải trang '{key}':\n{e}")
 
     def _logout(self):
         if messagebox.askyesno("Đăng xuất", "Bạn có muốn đăng xuất?"):

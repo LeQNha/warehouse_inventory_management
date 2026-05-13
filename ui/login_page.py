@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from theme import COLORS, FONTS
+from database import get_connection, hash_password
 
 
 class LoginPage(tk.Toplevel):
@@ -90,7 +91,7 @@ class LoginPage(tk.Toplevel):
         self.password_entry.bind("<Return>", lambda e: self._login())
 
         # Login button
-        login_btn = tk.Button(inner, text="Đăng nhập",
+        login_btn = tk.Button(inner, text="Đăng nhập", command=self._login,
                               bg=COLORS["accent"], fg="white",
                               activebackground=COLORS["accent_hover"],
                               activeforeground="white",
@@ -105,4 +106,21 @@ class LoginPage(tk.Toplevel):
                  font=FONTS["small"], bg=COLORS["bg_dark"],
                  fg=COLORS["text_muted"]).pack()
 
-        
+    def _login(self):
+        username = self.username_var.get().strip()
+        password = self.password_var.get().strip()
+        if not username or not password:
+            messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập đầy đủ thông tin!", parent=self)
+            return
+        conn = get_connection()
+        user = conn.execute(
+            "SELECT * FROM users WHERE username=? AND password=?",
+            (username, hash_password(password))
+        ).fetchone()
+        conn.close()
+        if user:
+            self.destroy()
+            self.on_success(dict(user))
+        else:
+            messagebox.showerror("Lỗi đăng nhập", "Sai tên đăng nhập hoặc mật khẩu!", parent=self)
+            self.password_entry.delete(0, "end")
