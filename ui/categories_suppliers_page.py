@@ -1,22 +1,57 @@
 
 import tkinter as tk
 from theme import COLORS, FONTS
+from widgets import PrimaryButton, DangerButton, SecondaryButton, SearchBar, make_table, page_header
 
 
 class CategoriesPage(tk.Frame):
     def __init__(self, master, current_user, **kw):
         super().__init__(master, bg=COLORS["bg_dark"], **kw)
         self.current_user = current_user
+        self._build()
 
+    def _build(self):
+        page_header(self, "🏷️  Quản lý danh mục", "Phân loại sản phẩm theo danh mục")
 
-class CategoryDialog(tk.Toplevel):
-    def __init__(self, parent, cat_id, on_save):
-        super().__init__(parent)
-        self.cat_id = cat_id
-        self.on_save = on_save
+        toolbar = tk.Frame(self, bg=COLORS["bg_dark"])
+        toolbar.pack(fill="x", pady=(0, 12))
+        self.search_bar = SearchBar(toolbar, on_search=self.search, placeholder="Tìm danh mục...")
+        self.search_bar.pack(side="left", fill="x", expand=True, padx=(0, 12))
+        PrimaryButton(toolbar, "Thêm danh mục", command=self.open_add, icon="➕").pack(side="left")
+
+        cols = ("ID", "Tên danh mục", "Mô tả", "Số sản phẩm", "Ngày tạo")
+        self.tree = make_table(self, cols)
+        self.tree.column("ID", width=60, anchor="center")
+        self.tree.column("Tên danh mục", width=200)
+        self.tree.column("Mô tả", width=280)
+        self.tree.column("Số sản phẩm", width=100, anchor="center")
+        self.tree.column("Ngày tạo", width=140, anchor="center")
+        for col in cols:
+            self.tree.heading(col, text=col)
+        self.tree.bind("<Double-1>", lambda e: self.open_edit())
+
+        action_bar = tk.Frame(self, bg=COLORS["bg_dark"])
+        action_bar.pack(fill="x", pady=(8, 0))
+        SecondaryButton(action_bar, "Chỉnh sửa", command=self.open_edit, icon="✏️").pack(side="left", padx=(0, 6))
+        DangerButton(action_bar, "Xóa", command=self.delete_item, icon="🗑️").pack(side="left")
+
+    def load_data(self, q=""):
+        a = 1
+    def search(self, q):
+        a = 1
+    def _selected_id(self):
+        a = 1
+    def open_add(self):
+        a = 1
+    def open_edit(self):
+        a = 1
+    def delete_item(self):
+        a = 1
+
     
 class SuppliersPage(tk.Frame):
     def __init__(self, master, current_user, **kw):
         super().__init__(master, bg=COLORS["bg_dark"], **kw)
         self.current_user = current_user
         
+    
