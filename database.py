@@ -59,12 +59,5 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)",
               ("staff", staff_pw, "Staff User", "staff"))
 
-    # Seed categories
-    for cat in [("Điện tử", "Thiết bị điện tử"), ("Thực phẩm", "Thực phẩm & đồ uống"),
-                ("Nội thất", "Bàn ghế, tủ kệ"), ("Quần áo", "Trang phục thời trang"),
-                ("Văn phòng phẩm", "Dụng cụ văn phòng")]:
-        c.execute("INSERT OR IGNORE INTO categories (name, description) VALUES (?, ?)", cat)
-
-
     conn.commit()
     conn.close()
