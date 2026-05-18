@@ -48,7 +48,7 @@ class MainWindow(tk.Tk):
         init_db()
         self._show_login()
 
-    # ── Login ────────────────────────────────────────────
+    # Login
     def _show_login(self):
         LoginPage(on_success=self._on_login)
 
@@ -67,7 +67,7 @@ class MainWindow(tk.Tk):
         w, h = 1280, 760
         self.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
-    # ── Main layout ──────────────────────────────────────
+    # Main layout
     def _build_main_ui(self):
         self.main_frame = tk.Frame(self, bg=COLORS["bg_dark"])
         self.main_frame.pack(fill="both", expand=True)
@@ -146,7 +146,7 @@ class MainWindow(tk.Tk):
         self.page_container = tk.Frame(self.content_area, bg=COLORS["bg_dark"])
         self.page_container.pack(fill="both", expand=True, padx=20, pady=20)
 
-    # ── Navigation ───────────────────────────────────────
+    # Navigation
     def navigate(self, key):
         # Highlight nav button
         for k, btn in self.nav_buttons.items():

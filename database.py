@@ -33,6 +33,15 @@ def init_db():
             description TEXT,
             created_at TEXT DEFAULT (datetime('now','localtime'))
         );
+                    
+        CREATE TABLE IF NOT EXISTS suppliers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT,
+            email TEXT,
+            address TEXT,
+            created_at TEXT DEFAULT (datetime('now','localtime'))
+        );
 
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
