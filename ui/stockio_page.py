@@ -6,7 +6,6 @@ from database import get_connection
 
 
 def _labeled_entry(parent, label, var):
-    """Label + Entry xếp dọc, không gọi .pack() bên ngoài."""
     tk.Label(parent, text=label, font=FONTS["body_bold"],
              bg=COLORS["bg_card"], fg=COLORS["text_secondary"]).pack(anchor="w", pady=(8, 2))
     holder = tk.Frame(parent, bg=COLORS["bg_input"],
@@ -23,7 +22,6 @@ def _labeled_entry(parent, label, var):
 
 
 def _form_panel(body, title, width=360):
-    """Tạo left panel (card trắng) và trả về frame bên trong để đặt widget."""
     outer = tk.Frame(body, bg=COLORS["bg_card"],
                      highlightthickness=1, highlightbackground=COLORS["border"],
                      width=width)

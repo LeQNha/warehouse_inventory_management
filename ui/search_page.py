@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from theme import COLORS, FONTS
 from widgets import PrimaryButton, SecondaryButton, make_table, page_header
+from database import get_connection
 
 class SearchPage(tk.Frame):
     def __init__(self, master, current_user, **kw):
@@ -90,10 +91,67 @@ class SearchPage(tk.Frame):
         self._hint()
 
     def _hint(self):
-        a = 1
+        self.result_count.config(text="Nhập từ khóa và nhấn Tìm kiếm")
+
     def _search(self):
-        a = 1
+        kw = self.v_keyword.get().strip()
+        code = self.v_code.get().strip()
+        cat = self.v_cat.get()
+        try:
+            min_q = int(self.v_min_qty.get()) if self.v_min_qty.get() else None
+            max_q = int(self.v_max_qty.get()) if self.v_max_qty.get() else None
+        except ValueError:
+            min_q = max_q = None
+
+        sql = """
+            SELECT p.product_code, p.name, c.name as cat, p.quantity, p.min_quantity,
+                   p.import_price, p.export_price, s.name as supplier, p.location
+            FROM products p
+            LEFT JOIN categories c ON p.category_id=c.id
+            LEFT JOIN suppliers s ON p.supplier_id=s.id
+            WHERE 1=1
+        """
+        params = []
+        if kw:
+            sql += " AND p.name LIKE ?"
+            params.append(f"%{kw}%")
+        if code:
+            sql += " AND p.product_code LIKE ?"
+            params.append(f"%{code}%")
+        if cat and cat != "Tất cả":
+            sql += " AND c.name = ?"
+            params.append(cat)
+        if min_q is not None:
+            sql += " AND p.quantity >= ?"
+            params.append(min_q)
+        if max_q is not None:
+            sql += " AND p.quantity <= ?"
+            params.append(max_q)
+        sql += " ORDER BY p.name"
+
+        conn = get_connection()
+        rows = conn.execute(sql, params).fetchall()
+        conn.close()
+
+        self.tree.delete(*self.tree.get_children())
+        for i, r in enumerate(rows):
+            tag = "low" if r["quantity"] <= r["min_quantity"] else ("even" if i % 2 else "odd")
+            self.tree.insert("", "end", tags=(tag,), values=(
+                r["product_code"], r["name"], r["cat"] or "–",
+                f"{r['quantity']:,}", r["min_quantity"],
+                f"{r['import_price']:,.0f}", f"{r['export_price']:,.0f}",
+                r["supplier"] or "–", r["location"] or "–"
+            ))
+
+        color = COLORS["accent"] if rows else COLORS["accent_orange"]
+        self.result_count.config(text=f"Tìm thấy {len(rows)} sản phẩm", fg=color)
 
     def _clear(self):
-        a = 1
+        self.v_keyword.set("")
+        self.v_code.set("")
+        self.v_cat.set("Tất cả")
+        self.v_min_qty.set("")
+        self.v_max_qty.set("")
+        self.tree.delete(*self.tree.get_children())
+        self._hint()
     
