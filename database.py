@@ -58,6 +58,30 @@ def init_db():
             FOREIGN KEY (category_id) REFERENCES categories(id),
             FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
         );
+                    
+        CREATE TABLE IF NOT EXISTS stock_in (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            import_price REAL,
+            supplier_id INTEGER,
+            note TEXT,
+            import_date TEXT DEFAULT (datetime('now','localtime')),
+            created_by INTEGER,
+            FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS stock_out (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            export_price REAL,
+            customer TEXT,
+            note TEXT,
+            export_date TEXT DEFAULT (datetime('now','localtime')),
+            created_by INTEGER,
+            FOREIGN KEY (product_id) REFERENCES products(id)
+        );
     """)
 
     # Seed default admin
