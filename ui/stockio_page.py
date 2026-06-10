@@ -52,10 +52,21 @@ class StockInPage(tk.Frame):
         self.current_user = current_user
         self.products  = {}
         self.suppliers = {}
+        self._load_refs()
         self._build()
+        self.load_history()
 
     def _load_refs(self):
-        a = 1
+        conn = get_connection()
+        self.products = {}
+        for p in conn.execute(
+                "SELECT id, name, product_code, quantity, import_price "
+                "FROM products ORDER BY name"):
+            self.products[f"[{p['product_code']}] {p['name']}"] = dict(p)
+        self.suppliers = {}
+        for s in conn.execute("SELECT id, name FROM suppliers ORDER BY name"):
+            self.suppliers[s["name"]] = s["id"]
+        conn.close()
 
     def _build(self):
         page_header(self, "📥  Nhập kho", "Ghi nhận hàng hóa nhập vào kho")
@@ -129,16 +140,74 @@ class StockInPage(tk.Frame):
             self.tree.column(col, width=w, anchor=anch)
 
     def _on_product_select(self, _=None):
-       a = 1
+        p = self.products.get(self.v_product.get())
+        if p:
+            self.stock_info.config(
+                text=f"Tồn kho: {p['quantity']:,}  |  Giá nhập gốc: {p['import_price']:,.0f} VNĐ",
+                fg=COLORS["text_secondary"])
+            self.v_price.set(str(int(p["import_price"])))
+        self._update_total()
 
-    def _update_total(self, *_):
-        a = 1
+    def _update_total(self, *_): # nhận bao nhiêu arg cũng được vì trace sẽ gửi thêm vài cái nữa
+        try:
+            t = int(self.v_qty.get() or 0) * float(self.v_price.get() or 0)
+            self.total_label.config(text=f"{t:,.0f} VNĐ")
+        except Exception:
+            self.total_label.config(text="– VNĐ")
 
     def _submit(self):
-        a = 1
+        key = self.v_product.get()
+        if not key:
+            messagebox.showerror("Lỗi", "Vui lòng chọn sản phẩm!", parent=self)
+            return
+        try:
+            qty = int(self.v_qty.get())
+            price = float(self.v_price.get() or 0)
+            if qty <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Lỗi", "Số lượng phải là số nguyên dương!", parent=self)
+            return
+
+        prod   = self.products[key]
+        sup_id = self.suppliers.get(self.v_sup.get())
+
+        conn = get_connection()
+        conn.execute(
+            "INSERT INTO stock_in (product_id, quantity, import_price, supplier_id, note) "
+            "VALUES (?,?,?,?,?)",
+            (prod["id"], qty, price, sup_id, self.v_note.get()))
+        conn.execute("UPDATE products SET quantity=quantity+? WHERE id=?",
+                     (qty, prod["id"]))
+        conn.commit()
+        conn.close()
+
+        self._load_refs()
+        self.product_combo["values"] = list(self.products.keys())
+        self.load_history()
+        self.v_qty.set("1")
+        self.v_note.set("")
+        messagebox.showinfo("Thành công", f"Đã nhập {qty:,} {prod['name']} vào kho!")
 
     def load_history(self):
-        a = 1
+        conn = get_connection()
+        rows = conn.execute("""
+            SELECT si.id, p.name, si.quantity, si.import_price,
+                   s.name as sup, si.note, si.import_date
+            FROM stock_in si
+            JOIN products p ON si.product_id = p.id
+            LEFT JOIN suppliers s ON si.supplier_id = s.id
+            ORDER BY si.import_date DESC LIMIT 200
+        """).fetchall()
+        conn.close()
+        self.tree.delete(*self.tree.get_children())
+        for i, r in enumerate(rows):
+            tag = "even" if i % 2 else "odd"
+            self.tree.insert("", "end", tags=(tag,), values=(
+                r["id"], r["name"], f"{r['quantity']:,}",
+                f"{r['import_price']:,.0f}", r["sup"] or "–",
+                r["note"] or "–", (r["import_date"] or "")[:16]
+            ))
 
 
 class StockOutPage(tk.Frame):
@@ -155,7 +224,7 @@ class StockOutPage(tk.Frame):
         body = tk.Frame(self, bg=COLORS["bg_dark"])
         body.pack(fill="both", expand=True)
 
-        # ── left form ────────────────────────────────────────
+        # left form
         f = _form_panel(body, "📝  Phiếu xuất kho")
 
         tk.Label(f, text="Sản phẩm *", font=FONTS["body_bold"],

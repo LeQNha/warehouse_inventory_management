@@ -14,7 +14,7 @@ class DashboardPage(tk.Frame):
     def _build(self):
         page_header(self, "📊  Tổng quan", "Theo dõi toàn bộ hoạt động kho hàng")
 
-        # ── Stat cards row ──────────────────────────────────
+        # Stat cards row 
         stats_row = tk.Frame(self, bg=COLORS["bg_dark"])
         stats_row.pack(fill="x", pady=(0, 20))
 
@@ -30,7 +30,7 @@ class DashboardPage(tk.Frame):
         self.sc_value = StatCard(stats_row, "Giá trị kho (VNĐ)", "–", "💰", COLORS["accent_yellow"])
         self.sc_value.pack(side="left", expand=True, fill="both")
 
-        # ── Second row ──────────────────────────────────────
+        # Second row 
         stats_row2 = tk.Frame(self, bg=COLORS["bg_dark"])
         stats_row2.pack(fill="x", pady=(0, 20))
 
@@ -46,7 +46,7 @@ class DashboardPage(tk.Frame):
         self.sc_users = StatCard(stats_row2, "Tài khoản", "–", "👥", COLORS["info"])
         self.sc_users.pack(side="left", expand=True, fill="both")
 
-        # ── Bottom panels ────────────────────────────────────
+        # Bottom panels
         bottom = tk.Frame(self, bg=COLORS["bg_dark"])
         bottom.pack(fill="both", expand=True)
 
