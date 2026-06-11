@@ -304,6 +304,38 @@ class ProductDialog(tk.Toplevel):
         except ValueError:
             messagebox.showerror("Lỗi", "Số lượng và giá phải là số!", parent=self)
             return
+        
+        if qty < 0:
+            messagebox.showerror(
+            "Lỗi",
+            "Số lượng không được âm!",
+            parent=self
+        )
+            return
+
+        if imp < 0:
+            messagebox.showerror(
+                "Lỗi",
+                "Giá nhập không được âm!",
+                parent=self
+            )
+            return
+
+        if exp < 0:
+            messagebox.showerror(
+                "Lỗi",
+                "Giá bán không được âm!",
+                parent=self
+            )
+            return
+
+        if min_q < 0:
+            messagebox.showerror(
+                "Lỗi",
+                "Tồn kho tối thiểu không được âm!",
+                parent=self
+            )
+            return
 
         cat_id = self.cats.get(self.v_cat.get())
         sup_id = self.sups.get(self.v_sup.get())

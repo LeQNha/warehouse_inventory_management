@@ -215,7 +215,9 @@ class StockOutPage(tk.Frame):
         super().__init__(master, bg=COLORS["bg_dark"], **kw)
         self.current_user = current_user
         self.products = {}
+        self._load_refs()
         self._build()
+        self.load_history()
 
 
     def _build(self):
