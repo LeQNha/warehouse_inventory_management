@@ -219,6 +219,14 @@ class StockOutPage(tk.Frame):
         self._build()
         self.load_history()
 
+    def _load_refs(self):
+        conn = get_connection()
+        self.products = {}
+        for p in conn.execute(
+                "SELECT id, name, product_code, quantity, export_price "
+                "FROM products ORDER BY name"):
+            self.products[f"[{p['product_code']}] {p['name']}"] = dict(p)
+        conn.close()
 
     def _build(self):
         page_header(self, "📤  Xuất kho", "Ghi nhận hàng hóa xuất ra khỏi kho")
@@ -283,13 +291,77 @@ class StockOutPage(tk.Frame):
             self.tree.column(col, width=w, anchor=anch)
 
     def _on_product_select(self, _=None):
-       a = 1
+        p = self.products.get(self.v_product.get())
+        if p:
+            color = COLORS["danger"] if p["quantity"] == 0 else COLORS["text_secondary"]
+            self.stock_info.config(
+                text=f"Tồn kho: {p['quantity']:,}  |  Giá bán gốc: {p['export_price']:,.0f} VNĐ",
+                fg=color)
+            self.v_price.set(str(int(p["export_price"])))
+        self._update_total()
 
     def _update_total(self, *_):
-        a = 1
+        try:
+            t = int(self.v_qty.get() or 0) * float(self.v_price.get() or 0)
+            self.total_label.config(text=f"{t:,.0f} VNĐ")
+        except Exception:
+            self.total_label.config(text="– VNĐ")
 
     def _submit(self):
-        a = 1
+        key = self.v_product.get()
+        if not key:
+            messagebox.showerror("Lỗi", "Vui lòng chọn sản phẩm!", parent=self)
+            return
+        try:
+            qty = int(self.v_qty.get())
+            price = float(self.v_price.get() or 0)
+            if qty <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Lỗi", "Số lượng phải là số nguyên dương!", parent=self)
+            return
+
+        prod = self.products[key]
+        if qty > prod["quantity"]:
+            messagebox.showerror("Không đủ hàng",
+                                 f"Tồn kho chỉ còn {prod['quantity']:,}!\n"
+                                 f"Không thể xuất {qty:,}.",
+                                 parent=self)
+            return
+
+        conn = get_connection()
+        conn.execute(
+            "INSERT INTO stock_out (product_id, quantity, export_price, customer, note) "
+            "VALUES (?,?,?,?,?)",
+            (prod["id"], qty, price, self.v_customer.get(), self.v_note.get()))
+        conn.execute("UPDATE products SET quantity=quantity-? WHERE id=?",
+                     (qty, prod["id"]))
+        conn.commit()
+        conn.close()
+
+        self._load_refs()
+        self.product_combo["values"] = list(self.products.keys())
+        self.load_history()
+        self.v_qty.set("1")
+        self.v_customer.set("")
+        self.v_note.set("")
+        messagebox.showinfo("Thành công", f"Đã xuất {qty:,} {prod['name']} khỏi kho!")
 
     def load_history(self):
-        a = 1
+        conn = get_connection()
+        rows = conn.execute("""
+            SELECT so.id, p.name, so.quantity, so.export_price,
+                   so.customer, so.note, so.export_date
+            FROM stock_out so
+            JOIN products p ON so.product_id = p.id
+            ORDER BY so.export_date DESC LIMIT 200
+        """).fetchall()
+        conn.close()
+        self.tree.delete(*self.tree.get_children())
+        for i, r in enumerate(rows):
+            tag = "even" if i % 2 else "odd"
+            self.tree.insert("", "end", tags=(tag,), values=(
+                r["id"], r["name"], f"{r['quantity']:,}",
+                f"{r['export_price']:,.0f}", r["customer"] or "–",
+                r["note"] or "–", (r["export_date"] or "")[:16]
+            ))

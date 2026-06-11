@@ -62,6 +62,14 @@ class SearchPage(tk.Frame):
         labeled(fields, "Từ khóa (tên SP)", self.v_keyword, 22)
         labeled(fields, "Mã sản phẩm", self.v_code, 14)
 
+        # categories
+        conn = get_connection()
+        cats = ["Tất cả"] + [r["name"] for r in conn.execute("SELECT name FROM categories ORDER BY name")]
+        conn.close()
+        combo_labeled(fields, "Danh mục", self.v_cat, cats, 16)
+
+        labeled(fields, "Tồn kho từ", self.v_min_qty, 8)
+        labeled(fields, "đến", self.v_max_qty, 8)
 
         btn_col = tk.Frame(fields, bg=COLORS["bg_card"])
         btn_col.pack(side="left", padx=(8, 0))
