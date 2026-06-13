@@ -237,7 +237,7 @@ def make_table(parent, columns, show="headings"):
     # Alternating row colors
     tree.tag_configure("odd",  background=COLORS["table_bg"])
     tree.tag_configure("even", background=COLORS["table_row_alt"])
-    tree.tag_configure("low",  background="#2A1A1A", foreground=COLORS["accent_orange"])
+    tree.tag_configure("low",  background="#674343", foreground=COLORS["accent_orange"])
     tree.tag_configure("ok",   background=COLORS["table_bg"])
 
     return tree
